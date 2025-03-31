@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Model Usage Tracker
 // @namespace    http://tampermonkey.net/
-// @version      0.1.0
+// @version      0.1.1
 // @description  Tracks usage count for different Gemini AI models with a modern UI.
 // @author       Your Name (or AI Assistant)
 // @match        https://gemini.google.com/*
@@ -24,8 +24,8 @@
     const modelNames = {
         '2.5 Pro': '2.5 Pro',
         'Deep Research': 'Deep Research',
+        '2.0 Flash Thinking': '2.0 Flash Thinking', // Order doesn't strictly matter here now due to sorting
         '2.0 Flash': '2.0 Flash',
-        '2.0 Flash Thinking': '2.0 Flash Thinking',
         // Add more specific model names as they appear in the UI
         // Example: 'Gemini 1.5 Pro': 'Gemini 1.5 Pro',
         // If a model name includes extra text like "(experimental)",
@@ -60,32 +60,35 @@
         GM_setValue(STORAGE_KEY, JSON.stringify(counts));
     }
 
-    function getCurrentModelName() {
+   function getCurrentModelName() {
         // Try finding the model name using the data-test-id first (more stable)
         const modelElement = document.querySelector('bard-mode-switcher [data-test-id="attribution-text"] span');
+        let rawText = null;
+
         if (modelElement && modelElement.textContent) {
-            const rawText = modelElement.textContent.trim();
-            // Find the best match from our defined modelNames
-            for (const key in modelNames) {
-                if (rawText.startsWith(key)) {
-                    return modelNames[key]; // Return the standardized name
-                }
-            }
-             // Fallback if no specific match startsWith, maybe it's an exact match or a new model
-             if (rawText) return rawText; // Return the raw text as a potential new model
+            rawText = modelElement.textContent.trim();
+        } else {
+            // Fallback selector (less reliable, might change)
+            const fallbackElement = document.querySelector('.current-mode-title span');
+             if (fallbackElement && fallbackElement.textContent) {
+                 rawText = fallbackElement.textContent.trim();
+             }
         }
 
-        // Fallback selector (less reliable, might change)
-        const fallbackElement = document.querySelector('.current-mode-title span');
-         if (fallbackElement && fallbackElement.textContent) {
-             const rawText = fallbackElement.textContent.trim();
-             for (const key in modelNames) {
-                 if (rawText.startsWith(key)) {
-                     return modelNames[key];
-                 }
-             }
-             if (rawText) return rawText;
+        if (rawText) {
+            // --- FIX: Sort keys by length descending to match longest first ---
+            const sortedKeys = Object.keys(modelNames).sort((a, b) => b.length - a.length);
+
+            for (const key of sortedKeys) { // Iterate through sorted keys
+                if (rawText.startsWith(key)) {
+                    return modelNames[key]; // Return the standardized name for the longest match
+                }
+            }
+             // Fallback if no specific match startsWith, maybe it's a new model
+             console.log(`Gemini Tracker: Model text "${rawText}" didn't match known prefixes, using raw text.`);
+             return rawText; // Return the raw text as a potential new model name
          }
+
 
         console.warn("Gemini Tracker: Could not determine current model name.");
         return null; // Indicate failure to find the model
@@ -98,10 +101,11 @@
         if (counts.hasOwnProperty(modelName)) {
             counts[modelName] = (counts[modelName] || 0) + 1;
         } else {
-            // If it's a newly detected model name, add it
+            // If it's a newly detected model name (returned as rawText), add it
             console.log(`Gemini Tracker: Detected new model '${modelName}', adding to tracker.`);
             counts[modelName] = 1;
-            // Optional: Automatically update modelNames if desired (more complex)
+            // You might want to manually add this new name to the `modelNames` const
+            // in the script for future consistency if it appears often.
         }
         saveCounts(counts);
         updateUI(counts); // Update the UI immediately
@@ -113,6 +117,14 @@
              Object.values(modelNames).forEach(name => {
                 initialCounts[name] = 0;
             });
+            // Keep potentially newly discovered models but reset their count
+             const currentCounts = loadCounts();
+             Object.keys(currentCounts).forEach(key => {
+                 if (!initialCounts.hasOwnProperty(key)) {
+                     initialCounts[key] = 0;
+                 }
+             });
+
             saveCounts(initialCounts);
             updateUI(initialCounts);
             console.log("Gemini Tracker: Counts reset.");
@@ -196,9 +208,10 @@
         const sortedModelNames = Object.keys(counts).sort((a, b) => {
             const aIsKnown = Object.values(modelNames).includes(a);
             const bIsKnown = Object.values(modelNames).includes(b);
-            if (aIsKnown && !bIsKnown) return -1;
+            if (aIsKnown && !bIsKnown) return -1; // Known models first
             if (!aIsKnown && bIsKnown) return 1;
-            return a.localeCompare(b); // Alphabetical sort otherwise
+            // Then sort alphabetically within known/unknown groups
+            return a.localeCompare(b);
         });
 
 
@@ -212,10 +225,11 @@
             listElement.appendChild(listItem);
         }
          // Add a message if the list is empty (e.g., after reset or initial load)
-         if (sortedModelNames.length === 0) {
+         if (sortedModelNames.length === 0 || sortedModelNames.every(name => counts[name] === 0)) {
               const emptyItem = document.createElement('li');
               emptyItem.textContent = 'No usage tracked yet.';
               emptyItem.style.fontStyle = 'italic';
+              emptyItem.style.opacity = '0.7';
               listElement.appendChild(emptyItem);
          }
     }
