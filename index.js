@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.1.1
 // @description  Tracks usage count for different Gemini AI models with a modern UI.
-// @author       Your Name (or AI Assistant)
+// @author       InvictusNavarchus
 // @match        https://gemini.google.com/*
 // @icon         https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg
 // @grant        GM_setValue
