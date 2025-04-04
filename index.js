@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Model Usage Tracker (Daily/Calendar)
 // @namespace    http://tampermonkey.net/
-// @version      0.4.0
+// @version      0.4.1
 // @description  Tracks usage count for different Gemini AI models per day (US Pacific Time) with a calendar selector, modern UI, and editing capabilities (locked by Developer Mode).
 // @author       InvictusNavarchus (modified by AI)
 // @match        https://gemini.google.com/*
@@ -62,6 +62,20 @@
              console.warn("Gemini Tracker: Falling back to local date string.");
              return `${yyyy}-${mm}-${dd}`;
         }
+    }
+
+    // Add specific function to track Deep Research confirmations
+    function trackDeepResearchConfirmation() {
+        document.body.addEventListener('click', function(event) {
+            // Look for the "Start research" button using the data-test-id attribute
+            const confirmButton = event.target.closest('button[data-test-id="confirm-button"]');
+            if (confirmButton) {
+                // When the button is clicked, increment the count for Deep Research model
+                console.log("Gemini Tracker: Deep Research confirmation detected. Incrementing count for 'Deep Research'");
+                incrementCount('Deep Research'); // This handles date logic internally
+            }
+        }, true); // Use capture phase
+        console.log("Gemini Tracker: Deep Research confirmation listener attached to body.");
     }
 
     function loadAllCounts() {
@@ -723,6 +737,7 @@
              selectedDate = getCurrentPacificDateString();
             createUI(); // Creates panel, toggle, calendar, loads initial states
             attachSendListener();
+            trackDeepResearchConfirmation(); // Add Deep Research tracking
             // Add menu commands (Reset now targets selected date)
             GM_registerMenuCommand("Reset Gemini Counts for Selected Day", resetCountsForSelectedDate);
             GM_registerMenuCommand("Toggle Gemini Usage UI", toggleUIVisibility);
