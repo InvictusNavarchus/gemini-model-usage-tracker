@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Model Usage Tracker (Daily/Calendar)
 // @namespace    http://tampermonkey.net/
-// @version      0.4.2
+// @version      0.5.0
 // @description  Tracks usage count for different Gemini AI models per day (US Pacific Time) with a calendar selector, modern UI, and editing capabilities (locked by Developer Mode).
 // @author       InvictusNavarchus
 // @match        https://gemini.google.com/*
@@ -15,6 +15,8 @@
 // @require      https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js
 // @resource     flatpickrCSS https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css
 // @resource     flatpickrTheme https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css
+// @downloadURL  https://raw.githubusercontent.com/InvictusNavarchus/gemini-usage-tracker/master/gemini-usage-tracker.user.js
+// @updateURL    https://raw.githubusercontent.com/InvictusNavarchus/gemini-usage-tracker/master/gemini-usage-tracker.user.js
 // ==/UserScript==
 
 (function() {
