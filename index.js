@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Model Usage Tracker (Daily/Calendar)
 // @namespace    http://tampermonkey.net/
-// @version      0.4.1
+// @version      0.4.2
 // @description  Tracks usage count for different Gemini AI models per day (US Pacific Time) with a calendar selector, modern UI, and editing capabilities (locked by Developer Mode).
 // @author       InvictusNavarchus (modified by AI)
 // @match        https://gemini.google.com/*
@@ -718,6 +718,13 @@
             if (sendButton && sendButton.getAttribute('aria-disabled') !== 'true') {
                  setTimeout(() => {
                      const modelName = getCurrentModelName();
+                     
+                     // Skip Deep Research model in general tracking - it's handled by trackDeepResearchConfirmation()
+                     if (modelName === 'Deep Research') {
+                         console.log(`Gemini Tracker: Deep Research detected but not incrementing via send button.`);
+                         return;
+                     }
+                     
                      console.log(`Gemini Tracker: Send clicked. Current model: ${modelName || 'Unknown'}. Incrementing for PT Date: ${getCurrentPacificDateString()}`);
                      incrementCount(modelName); // This now handles date logic internally
                  }, 50);
