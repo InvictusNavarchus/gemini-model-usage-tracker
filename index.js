@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.4.2
 // @description  Tracks usage count for different Gemini AI models per day (US Pacific Time) with a calendar selector, modern UI, and editing capabilities (locked by Developer Mode).
-// @author       InvictusNavarchus (modified by AI)
+// @author       InvictusNavarchus
 // @match        https://gemini.google.com/*
 // @icon         https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg
 // @grant        GM_setValue
