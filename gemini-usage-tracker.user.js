@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Model Usage Tracker (Daily/Calendar)
 // @namespace    http://tampermonkey.net/
-// @version      0.5.0
+// @version      0.5.1
 // @description  Tracks usage count for different Gemini AI models per day (US Pacific Time) with a calendar selector, modern UI, and editing capabilities (locked by Developer Mode).
 // @author       InvictusNavarchus
 // @match        https://gemini.google.com/*
@@ -19,7 +19,7 @@
 // @updateURL    https://raw.githubusercontent.com/InvictusNavarchus/gemini-usage-tracker/master/gemini-usage-tracker.user.js
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     const STORAGE_KEY_DAILY = 'geminiModelUsageCountsDaily'; // Changed key for new structure
@@ -57,18 +57,18 @@
         } catch (e) {
             console.error("Gemini Tracker: Error getting Pacific Time date.", e);
             // Fallback to local date (less ideal but prevents complete failure)
-             const today = new Date();
-             const yyyy = today.getFullYear();
-             const mm = String(today.getMonth() + 1).padStart(2, '0');
-             const dd = String(today.getDate()).padStart(2, '0');
-             console.warn("Gemini Tracker: Falling back to local date string.");
-             return `${yyyy}-${mm}-${dd}`;
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            console.warn("Gemini Tracker: Falling back to local date string.");
+            return `${yyyy}-${mm}-${dd}`;
         }
     }
 
     // Add specific function to track Deep Research confirmations
     function trackDeepResearchConfirmation() {
-        document.body.addEventListener('click', function(event) {
+        document.body.addEventListener('click', function (event) {
             // Look for the "Start research" button using the data-test-id attribute
             const confirmButton = event.target.closest('button[data-test-id="confirm-button"]');
             if (confirmButton) {
@@ -90,19 +90,19 @@
                 return {};
             }
             // Optional: Deeper validation per date entry if needed
-             Object.keys(allCounts).forEach(dateKey => {
-                 if (typeof allCounts[dateKey] !== 'object' || allCounts[dateKey] === null) {
-                     console.warn(`Gemini Tracker: Invalid data for date ${dateKey}, removing.`);
-                     delete allCounts[dateKey];
-                     return;
-                 }
-                 Object.keys(allCounts[dateKey]).forEach(modelKey => {
-                     if (typeof allCounts[dateKey][modelKey] !== 'number' || isNaN(allCounts[dateKey][modelKey])) {
-                         console.warn(`Gemini Tracker: Invalid count for ${modelKey} on ${dateKey}, resetting to 0.`);
-                         allCounts[dateKey][modelKey] = 0;
-                     }
-                 });
-             });
+            Object.keys(allCounts).forEach(dateKey => {
+                if (typeof allCounts[dateKey] !== 'object' || allCounts[dateKey] === null) {
+                    console.warn(`Gemini Tracker: Invalid data for date ${dateKey}, removing.`);
+                    delete allCounts[dateKey];
+                    return;
+                }
+                Object.keys(allCounts[dateKey]).forEach(modelKey => {
+                    if (typeof allCounts[dateKey][modelKey] !== 'number' || isNaN(allCounts[dateKey][modelKey])) {
+                        console.warn(`Gemini Tracker: Invalid count for ${modelKey} on ${dateKey}, resetting to 0.`);
+                        allCounts[dateKey][modelKey] = 0;
+                    }
+                });
+            });
 
             return allCounts;
         } catch (e) {
@@ -128,23 +128,30 @@
         try {
             GM_setValue(STORAGE_KEY_DAILY, JSON.stringify(allCounts));
         } catch (e) {
-             console.error("Gemini Tracker: Error saving daily counts.", e);
+            console.error("Gemini Tracker: Error saving daily counts.", e);
         }
     }
 
-   function getCurrentModelName() {
-        // Try finding the model name using the data-test-id first (more stable)
-        const modelElement = document.querySelector('bard-mode-switcher [data-test-id="attribution-text"] span');
+    function getCurrentModelName() {
+        // Try finding the model name using the new mat-flat-button structure first
+        const modelButton = document.querySelector('button.gds-mode-switch-button.mat-mdc-button-base .logo-pill-label-container span');
         let rawText = null;
 
-        if (modelElement && modelElement.textContent) {
-            rawText = modelElement.textContent.trim();
+        if (modelButton && modelButton.textContent) {
+            rawText = modelButton.textContent.trim();
         } else {
-            // Fallback selector (less reliable, might change)
-            const fallbackElement = document.querySelector('.current-mode-title span');
-             if (fallbackElement && fallbackElement.textContent) {
-                 rawText = fallbackElement.textContent.trim();
-             }
+            // Try the previous selector (data-test-id)
+            const modelElement = document.querySelector('bard-mode-switcher [data-test-id="attribution-text"] span');
+
+            if (modelElement && modelElement.textContent) {
+                rawText = modelElement.textContent.trim();
+            } else {
+                // Fallback selector (less reliable, might change)
+                const fallbackElement = document.querySelector('.current-mode-title span');
+                if (fallbackElement && fallbackElement.textContent) {
+                    rawText = fallbackElement.textContent.trim();
+                }
+            }
         }
 
         if (rawText) {
@@ -233,7 +240,7 @@
                 saveAllCounts(allCounts);
                 updateUI(selectedDate); // Refresh UI for the cleared date
             } else {
-                 console.log(`Gemini Tracker: No counts found for ${selectedDate} to reset.`);
+                console.log(`Gemini Tracker: No counts found for ${selectedDate} to reset.`);
             }
         }
     }
@@ -257,7 +264,7 @@
         toggleButton = document.createElement('div');
         toggleButton.id = 'gemini-tracker-toggle';
         // SVG icon remains the same
-         toggleButton.innerHTML = `
+        toggleButton.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF">
                 <path d="M0 0h24v24H0V0z" fill="none"/>
                 <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
@@ -285,26 +292,26 @@
         document.body.appendChild(uiPanel);
 
         // --- Date Picker Initialization ---
-         datePickerInput = uiPanel.querySelector('#tracker-date-selector');
-         flatpickrInstance = flatpickr(datePickerInput, {
-             dateFormat: "Y-m-d",
-             defaultDate: selectedDate, // Set initial date
-             maxDate: getCurrentPacificDateString(), // Optional: prevent future dates?
-             altInput: true, // Show user-friendly format, submit standard format
-             altFormat: "M j, Y", // Example: Mar 31, 2025
-             onChange: function(selectedDates, dateStr, instance) {
-                 console.log("Selected date:", dateStr);
-                 selectedDate = dateStr; // Update global selected date
-                 updateUI(selectedDate); // Refresh the list for the new date
-             },
-         });
+        datePickerInput = uiPanel.querySelector('#tracker-date-selector');
+        flatpickrInstance = flatpickr(datePickerInput, {
+            dateFormat: "Y-m-d",
+            defaultDate: selectedDate, // Set initial date
+            maxDate: getCurrentPacificDateString(), // Optional: prevent future dates?
+            altInput: true, // Show user-friendly format, submit standard format
+            altFormat: "M j, Y", // Example: Mar 31, 2025
+            onChange: function (selectedDates, dateStr, instance) {
+                console.log("Selected date:", dateStr);
+                selectedDate = dateStr; // Update global selected date
+                updateUI(selectedDate); // Refresh the list for the new date
+            },
+        });
 
 
         // --- Create and Insert Developer Mode Toggle ---
         const devModeContainer = document.createElement('div');
         devModeContainer.className = 'tracker-setting';
         // ... (rest of dev mode element creation is the same as before) ...
-         const devModeLabel = document.createElement('label');
+        const devModeLabel = document.createElement('label');
         devModeLabel.htmlFor = 'dev-mode-checkbox';
         devModeLabel.textContent = 'Developer Mode';
 
@@ -343,7 +350,7 @@
             if (isDevModeEnabled && event.target.classList.contains('model-count') && !event.target.isEditing) {
                 makeCountEditable(event.target);
             } else if (!isDevModeEnabled && event.target.classList.contains('model-count')) {
-                 console.log("Gemini Tracker: Editing disabled. Enable Developer Mode to edit counts.");
+                console.log("Gemini Tracker: Editing disabled. Enable Developer Mode to edit counts.");
             }
         });
 
@@ -358,7 +365,7 @@
         updateUI(selectedDate);
     }
 
-     function setUIVisibility(visible) {
+    function setUIVisibility(visible) {
         if (!uiPanel || !toggleButton) return;
         uiPanel.style.display = visible ? 'block' : 'none';
         toggleButton.classList.toggle('active', visible);
@@ -370,11 +377,11 @@
         if (!uiPanel) return;
         const currentlyVisible = uiPanel.style.display === 'block';
         setUIVisibility(!currentlyVisible);
-         if (!currentlyVisible) {
+        if (!currentlyVisible) {
             // When opening, refresh UI for the currently selected date
             selectedDate = flatpickrInstance ? flatpickrInstance.selectedDates[0] ? flatpickrInstance.formatDate(flatpickrInstance.selectedDates[0], "Y-m-d") : getCurrentPacificDateString() : getCurrentPacificDateString(); // Ensure selectedDate is current
-            if(flatpickrInstance && !flatpickrInstance.selectedDates[0]){
-                 flatpickrInstance.setDate(selectedDate, false); // Update calendar if it lost selection
+            if (flatpickrInstance && !flatpickrInstance.selectedDates[0]) {
+                flatpickrInstance.setDate(selectedDate, false); // Update calendar if it lost selection
             }
             const currentDevMode = GM_getValue(DEV_MODE_KEY, false);
             updateDevModeVisuals(currentDevMode); // Ensure dev mode visuals are correct
@@ -383,7 +390,7 @@
     }
 
     // --- Handle Developer Mode Toggle Change ---
-     function handleDevModeToggle() {
+    function handleDevModeToggle() {
         const isEnabled = devModeCheckbox.checked;
         GM_setValue(DEV_MODE_KEY, isEnabled);
         console.log(`Gemini Tracker: Developer Mode ${isEnabled ? 'Enabled' : 'Disabled'}`);
@@ -400,19 +407,19 @@
         if (uiPanel) {
             uiPanel.classList.toggle('dev-mode-active', isEnabled);
         }
-         // Styling changes handled by CSS based on 'dev-mode-active' class
+        // Styling changes handled by CSS based on 'dev-mode-active' class
     }
 
 
     function updateUI(dateString) {
-         if (!uiPanel) return;
+        if (!uiPanel) return;
         const listElement = uiPanel.querySelector('#tracker-list');
         if (!listElement) return;
 
         // Ensure the calendar input reflects the date being displayed
         if (flatpickrInstance && datePickerInput.value !== dateString) {
-             // Update flatpickr's internal date without triggering onChange
-             flatpickrInstance.setDate(dateString, false);
+            // Update flatpickr's internal date without triggering onChange
+            flatpickrInstance.setDate(dateString, false);
         }
 
         const countsForDay = getCountsForDate(dateString);
@@ -422,27 +429,27 @@
 
         const isDevModeEnabled = GM_getValue(DEV_MODE_KEY, false);
 
-         // Get potentially new models detected on this day + defined models
-         let modelsToDisplay = [...Object.values(modelNames)];
-         Object.keys(countsForDay).forEach(model => {
-             if (!modelsToDisplay.includes(model)) {
-                 modelsToDisplay.push(model);
-             }
-         });
-         // Sort: Defined models first alphabetically, then new models alphabetically
-         modelsToDisplay.sort((a, b) => {
-             const aIsKnown = Object.values(modelNames).includes(a);
-             const bIsKnown = Object.values(modelNames).includes(b);
-             if (aIsKnown && !bIsKnown) return -1;
-             if (!aIsKnown && bIsKnown) return 1;
-             return a.localeCompare(b);
-         });
+        // Get potentially new models detected on this day + defined models
+        let modelsToDisplay = [...Object.values(modelNames)];
+        Object.keys(countsForDay).forEach(model => {
+            if (!modelsToDisplay.includes(model)) {
+                modelsToDisplay.push(model);
+            }
+        });
+        // Sort: Defined models first alphabetically, then new models alphabetically
+        modelsToDisplay.sort((a, b) => {
+            const aIsKnown = Object.values(modelNames).includes(a);
+            const bIsKnown = Object.values(modelNames).includes(b);
+            if (aIsKnown && !bIsKnown) return -1;
+            if (!aIsKnown && bIsKnown) return 1;
+            return a.localeCompare(b);
+        });
 
 
         let hasUsage = false;
         for (const modelName of modelsToDisplay) {
             const count = countsForDay[modelName] || 0; // Get count, default to 0 if not present
-             if (count > 0) hasUsage = true;
+            if (count > 0) hasUsage = true;
 
             const listItem = document.createElement('li');
 
@@ -467,15 +474,15 @@
             listElement.appendChild(listItem);
         }
 
-         // Add a message if the list is empty or all counts are zero for the day
-         if (modelsToDisplay.length === 0 || !hasUsage) {
-              const emptyItem = document.createElement('li');
-              emptyItem.textContent = `No usage tracked for ${dateString}.`;
-              emptyItem.style.fontStyle = 'italic';
-              emptyItem.style.opacity = '0.7';
-              emptyItem.style.justifyContent = 'center'; // Center the empty message
-              listElement.appendChild(emptyItem);
-         }
+        // Add a message if the list is empty or all counts are zero for the day
+        if (modelsToDisplay.length === 0 || !hasUsage) {
+            const emptyItem = document.createElement('li');
+            emptyItem.textContent = `No usage tracked for ${dateString}.`;
+            emptyItem.style.fontStyle = 'italic';
+            emptyItem.style.opacity = '0.7';
+            emptyItem.style.justifyContent = 'center'; // Center the empty message
+            listElement.appendChild(emptyItem);
+        }
     }
 
     // --- Editing Input Field Logic ---
@@ -497,37 +504,37 @@
         input.select();
 
         const removeInput = (saveValue) => {
-             if (!document.body.contains(input)) return; // Already removed
+            if (!document.body.contains(input)) return; // Already removed
 
-             // Find the parent li in case we need to restore the span manually
-             const parentListItem = input.closest('li');
+            // Find the parent li in case we need to restore the span manually
+            const parentListItem = input.closest('li');
 
             if (saveValue) {
                 // Pass the currently selectedDate to the save function
                 manuallySetCount(modelName, input.value, selectedDate);
-                 // manuallySetCount calls updateUI, so no need to restore span locally
+                // manuallySetCount calls updateUI, so no need to restore span locally
             } else {
-                 // Cancel: Remove input, show original span
+                // Cancel: Remove input, show original span
                 input.remove();
-                if(parentListItem) {
-                     // Find the original span within this specific list item
+                if (parentListItem) {
+                    // Find the original span within this specific list item
                     const originalSpan = parentListItem.querySelector(`.model-count[data-model-name="${modelName}"]`);
-                    if(originalSpan) {
+                    if (originalSpan) {
                         originalSpan.style.display = ''; // Restore visibility
                         originalSpan.isEditing = false; // Reset editing flag
                     }
                 }
             }
-             // Reset flag in case of cancel/blur without save
-             // (It's implicitly reset by updateUI on successful save)
+            // Reset flag in case of cancel/blur without save
+            // (It's implicitly reset by updateUI on successful save)
             if (!saveValue && countSpan) countSpan.isEditing = false;
         };
 
-         input.addEventListener('blur', () => {
+        input.addEventListener('blur', () => {
             if (!input.enterPressed) { // Avoid double save on Enter + Blur
-                 // Slight delay allows Enter keydown to process first if needed
-                 setTimeout(() => removeInput(true), 50);
-             }
+                // Slight delay allows Enter keydown to process first if needed
+                setTimeout(() => removeInput(true), 50);
+            }
         });
 
         input.addEventListener('keydown', (e) => {
@@ -536,7 +543,7 @@
                 input.enterPressed = true; // Flag to prevent blur event saving again
                 removeInput(true); // Save on Enter
             } else if (e.key === 'Escape') {
-                 input.enterPressed = false; // Ensure blur doesn't save if Escape is hit
+                input.enterPressed = false; // Ensure blur doesn't save if Escape is hit
                 removeInput(false); // Cancel on Escape
             }
         });
@@ -715,24 +722,24 @@
 
     // --- Event Listener for Prompt Submission ---
     function attachSendListener() {
-        document.body.addEventListener('click', function(event) {
+        document.body.addEventListener('click', function (event) {
             const sendButton = event.target.closest('button:has(mat-icon[data-mat-icon-name="send"]), button.send-button');
             if (sendButton && sendButton.getAttribute('aria-disabled') !== 'true') {
-                 setTimeout(() => {
-                     const modelName = getCurrentModelName();
-                     
-                     // Skip Deep Research model in general tracking - it's handled by trackDeepResearchConfirmation()
-                     if (modelName === 'Deep Research') {
-                         console.log(`Gemini Tracker: Deep Research detected but not incrementing via send button.`);
-                         return;
-                     }
-                     
-                     console.log(`Gemini Tracker: Send clicked. Current model: ${modelName || 'Unknown'}. Incrementing for PT Date: ${getCurrentPacificDateString()}`);
-                     incrementCount(modelName); // This now handles date logic internally
-                 }, 50);
+                setTimeout(() => {
+                    const modelName = getCurrentModelName();
+
+                    // Skip Deep Research model in general tracking - it's handled by trackDeepResearchConfirmation()
+                    if (modelName === 'Deep Research') {
+                        console.log(`Gemini Tracker: Deep Research detected but not incrementing via send button.`);
+                        return;
+                    }
+
+                    console.log(`Gemini Tracker: Send clicked. Current model: ${modelName || 'Unknown'}. Incrementing for PT Date: ${getCurrentPacificDateString()}`);
+                    incrementCount(modelName); // This now handles date logic internally
+                }, 50);
             }
         }, true); // Use capture phase
-         console.log("Gemini Tracker: Send button listener attached to body.");
+        console.log("Gemini Tracker: Send button listener attached to body.");
     }
 
     // --- Initialization ---
@@ -743,7 +750,7 @@
         if (chatContainer && inputArea && !document.getElementById('gemini-tracker-toggle')) {
             console.log("Gemini Tracker: Initializing UI, listeners, and calendar.");
             // Ensure selectedDate is the current PT date before creating UI
-             selectedDate = getCurrentPacificDateString();
+            selectedDate = getCurrentPacificDateString();
             createUI(); // Creates panel, toggle, calendar, loads initial states
             attachSendListener();
             trackDeepResearchConfirmation(); // Add Deep Research tracking
