@@ -163,10 +163,10 @@
                     return modelNames[key]; // Return the standardized name for the longest match
                 }
             }
-             // Fallback if no specific match startsWith, maybe it's a new model
-             console.log(`Gemini Tracker: Model text "${rawText}" didn't match known prefixes, using raw text.`);
-             return rawText; // Return the raw text as a potential new model name
-         }
+            // Fallback if no specific match startsWith, maybe it's a new model
+            console.log(`Gemini Tracker: Model text "${rawText}" didn't match known prefixes, using raw text.`);
+            return rawText; // Return the raw text as a potential new model name
+        }
 
         console.warn("Gemini Tracker: Could not determine current model name.");
         return null; // Indicate failure to find the model
