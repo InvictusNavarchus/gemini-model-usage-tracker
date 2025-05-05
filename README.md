@@ -3,7 +3,7 @@
 ![Userscript Version](https://img.shields.io/badge/version-0.5.3-blue?style=flat-square)
 ![GPLv3 Badge](https://img.shields.io/badge/license-GPLv3-blue)
 
-A userscript designed for Tampermonkey/Violentmonkey that monitors and records the usage frequency of different Google Gemini AI models on a daily basis (using the UTC timezone). It features a modern UI panel 🖥️ with a calendar 📅 for navigating historical data and allows for manual count adjustments via a Developer Mode setting 🔒.
+A userscript that monitors and records the usage frequency of different Google Gemini AI models on a daily basis (using the UTC timezone). It features a modern UI panel 🖥️ with a calendar 📅 for navigating historical data and allows for manual count adjustments via a Developer Mode setting 🔒.
 
 ---
 
