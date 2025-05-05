@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Model Usage Tracker (Daily/Calendar)
 // @namespace    http://tampermonkey.net/
-// @version      0.5.1
+// @version      0.5.2
 // @description  Tracks usage count for different Gemini AI models per day (US Pacific Time) with a calendar selector, modern UI, and editing capabilities (locked by Developer Mode).
 // @author       InvictusNavarchus
 // @match        https://gemini.google.com/*
@@ -31,10 +31,12 @@
 
     // --- Model Definitions ---
     const modelNames = {
+        '2.0 Flash': '2.0 Flash',
+        '2.5 Flash': '2.5 Flash',
         '2.5 Pro': '2.5 Pro',
         'Deep Research': 'Deep Research',
-        '2.0 Flash Thinking': '2.0 Flash Thinking',
-        '2.0 Flash': '2.0 Flash',
+        'Personalization': 'Personalization',
+        'Veo 2': 'Veo 2',
         // Add more specific model names as they appear in the UI
     };
 
