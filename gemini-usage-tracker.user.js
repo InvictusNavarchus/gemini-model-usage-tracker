@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Gemini Model Usage Tracker (Daily/Calendar)
 // @namespace    http://tampermonkey.net/
-// @version      0.5.2
-// @description  Tracks usage count for different Gemini AI models per day (US Pacific Time) with a calendar selector, modern UI, and editing capabilities (locked by Developer Mode).
+// @version      0.5.3
+// @description  Tracks usage count for different Gemini AI models per day (UTC) with a calendar selector, modern UI, and editing capabilities (locked by Developer Mode).
 // @author       InvictusNavarchus
 // @match        https://gemini.google.com/*
 // @icon         https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg
@@ -25,9 +25,9 @@
     const STORAGE_KEY_DAILY = 'geminiModelUsageCountsDaily'; // Changed key for new structure
     const UI_VISIBLE_KEY = 'geminiModelUsageUIVisible';
     const DEV_MODE_KEY = 'geminiTrackerDevModeEnabled';
-    const PACIFIC_TIMEZONE = 'America/Los_Angeles';
+    const UTC_TIMEZONE = 'UTC'; // Changed from PACIFIC_TIMEZONE to UTC_TIMEZONE
 
-    let selectedDate = getCurrentPacificDateString(); // Initialize with today's PT date
+    let selectedDate = getCurrentUTCDateString(); // Initialize with today's UTC date
 
     // --- Model Definitions ---
     const modelNames = {
@@ -43,21 +43,21 @@
     // --- Helper Functions ---
 
     /**
-     * Gets the current date string (YYYY-MM-DD) in US Pacific Time.
+     * Gets the current date string (YYYY-MM-DD) in UTC.
      * @returns {string} Date string or throws error if formatting fails.
      */
-    function getCurrentPacificDateString() {
+    function getCurrentUTCDateString() {
         try {
             const now = new Date();
             const formatter = new Intl.DateTimeFormat('en-CA', { // 'en-CA' gives YYYY-MM-DD
-                timeZone: PACIFIC_TIMEZONE,
+                timeZone: UTC_TIMEZONE,
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit'
             });
             return formatter.format(now);
         } catch (e) {
-            console.error("Gemini Tracker: Error getting Pacific Time date.", e);
+            console.error("Gemini Tracker: Error getting UTC date.", e);
             // Fallback to local date (less ideal but prevents complete failure)
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -177,29 +177,29 @@
     function incrementCount(modelName) {
         if (!modelName) return;
 
-        const currentPTDate = getCurrentPacificDateString();
+        const currentUTCDate = getCurrentUTCDateString();
         const allCounts = loadAllCounts();
 
         // Ensure the object for the current date exists
-        if (!allCounts[currentPTDate]) {
-            allCounts[currentPTDate] = {};
+        if (!allCounts[currentUTCDate]) {
+            allCounts[currentUTCDate] = {};
         }
 
-        const dailyCounts = allCounts[currentPTDate];
+        const dailyCounts = allCounts[currentUTCDate];
 
         if (dailyCounts.hasOwnProperty(modelName)) {
             dailyCounts[modelName] = (dailyCounts[modelName] || 0) + 1;
         } else {
             // If it's a newly detected model name (returned as rawText), add it
-            console.log(`Gemini Tracker: Detected new model '${modelName}' on ${currentPTDate}, adding to tracker.`);
+            console.log(`Gemini Tracker: Detected new model '${modelName}' on ${currentUTCDate}, adding to tracker.`);
             dailyCounts[modelName] = 1;
             // Manually add to `modelNames` constant if it becomes permanent
         }
 
         saveAllCounts(allCounts);
 
-        // Only update UI if it's visible AND showing the current PT date
-        if (uiPanel && uiPanel.style.display === 'block' && selectedDate === currentPTDate) {
+        // Only update UI if it's visible AND showing the current UTC date
+        if (uiPanel && uiPanel.style.display === 'block' && selectedDate === currentUTCDate) {
             updateUI(selectedDate);
         }
     }
@@ -298,7 +298,7 @@
         flatpickrInstance = flatpickr(datePickerInput, {
             dateFormat: "Y-m-d",
             defaultDate: selectedDate, // Set initial date
-            maxDate: getCurrentPacificDateString(), // Optional: prevent future dates?
+            maxDate: getCurrentUTCDateString(), // Optional: prevent future dates?
             altInput: true, // Show user-friendly format, submit standard format
             altFormat: "M j, Y", // Example: Mar 31, 2025
             onChange: function (selectedDates, dateStr, instance) {
@@ -381,7 +381,7 @@
         setUIVisibility(!currentlyVisible);
         if (!currentlyVisible) {
             // When opening, refresh UI for the currently selected date
-            selectedDate = flatpickrInstance ? flatpickrInstance.selectedDates[0] ? flatpickrInstance.formatDate(flatpickrInstance.selectedDates[0], "Y-m-d") : getCurrentPacificDateString() : getCurrentPacificDateString(); // Ensure selectedDate is current
+            selectedDate = flatpickrInstance ? flatpickrInstance.selectedDates[0] ? flatpickrInstance.formatDate(flatpickrInstance.selectedDates[0], "Y-m-d") : getCurrentUTCDateString() : getCurrentUTCDateString(); // Ensure selectedDate is current
             if (flatpickrInstance && !flatpickrInstance.selectedDates[0]) {
                 flatpickrInstance.setDate(selectedDate, false); // Update calendar if it lost selection
             }
@@ -736,7 +736,7 @@
                         return;
                     }
 
-                    console.log(`Gemini Tracker: Send clicked. Current model: ${modelName || 'Unknown'}. Incrementing for PT Date: ${getCurrentPacificDateString()}`);
+                    console.log(`Gemini Tracker: Send clicked. Current model: ${modelName || 'Unknown'}. Incrementing for UTC Date: ${getCurrentUTCDateString()}`);
                     incrementCount(modelName); // This now handles date logic internally
                 }, 50);
             }
@@ -751,8 +751,8 @@
 
         if (chatContainer && inputArea && !document.getElementById('gemini-tracker-toggle')) {
             console.log("Gemini Tracker: Initializing UI, listeners, and calendar.");
-            // Ensure selectedDate is the current PT date before creating UI
-            selectedDate = getCurrentPacificDateString();
+            // Ensure selectedDate is the current UTC date before creating UI
+            selectedDate = getCurrentUTCDateString();
             createUI(); // Creates panel, toggle, calendar, loads initial states
             attachSendListener();
             trackDeepResearchConfirmation(); // Add Deep Research tracking
